@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculator HVAC – SmartPM</title>
+  <style>
+    body { font-family: Arial; max-width: 800px; margin: 20px auto; padding: 20px; background: #f4f4f4; }
+    input, select, button { padding: 10px; margin: 10px 0; width: 100%; font-size: 16px; }
+    button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+    #rezultat { background: #fff; padding: 20px; border-radius: 8px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <h2>Calculator HVAC – SmartPM</h2>
+
+  <label>Suprafață (m²):</label>
+  <input id="suprafata" type="number">
+
+  <label>Înălțime (m):</label>
+  <input id="inaltime" type="number" value="2.5">
+
+  <label>Etaje:</label>
+  <select id="etaje">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3" selected>3</option>
+    <option value="4">4+</option>
+  </select>
+
+  <label>Izolație pereți:</label>
+  <select id="izolatie">
+    <option value="1.20">Fără izolație</option>
+    <option value="0.80">Slabă</option>
+    <option value="0.60">Medie</option>
+    <option value="0.50">Bună</option>
+    <option value="0.40">Foarte bună</option>
+  </select>
+
+  <label>Izolație pardoseală:</label>
+  <select id="pardoseala">
+    <option value="0.25">Fără izolație</option>
+    <option value="0.15">XPS 3 cm</option>
+    <option value="0.10">XPS 5 cm</option>
+    <option value="0.05">XPS ≥ 8 cm</option>
+  </select>
+
+  <label>Suprafață vitrată (m²):</label>
+  <input id="vitrata" type="number">
+
+  <label>Calitate geam:</label>
+  <select id="fereastra">
+    <option value="4.5">Geam simplu</option>
+    <option value="2.7">Termopan 2 foi</option>
+    <option value="1.0">Termopan 3 foi</option>
+    <option value="0.6">Tripan LowE</option>
+  </select>
+
+  <label>ΔT temperatură (°C):</label>
+  <input id="deltaT" type="number" value="38">
+
+  <label>Sursa de încălzire:</label>
+  <select id="sursa">
+    <option value="gaz">Gaz (90%)</option>
+    <option value="electric">Electric (100%)</option>
+    <option value="lemn">Lemn (75%)</option>
+    <option value="peleti">Peleți (88%)</option>
+    <option value="pompa">Pompă Aer–Apă (COP 3.5)</option>
+  </select>
+
+  <button onclick="calculeaza()">Calculează</button>
+
+  <div id="rezultat"></div>
+
+  <script>
+    function calculeaza() {
+      let s = parseFloat(document.getElementById("suprafata").value);
+      let h = parseFloat(document.getElementById("inaltime").value);
+      let etaje = parseInt(document.getElementById("etaje").value);
+      let g = parseFloat(document.getElementById("izolatie").value);
+      let pard = parseFloat(document.getElementById("pardoseala").value);
+      let S_vitrata = parseFloat(document.getElementById("vitrata").value);
+      let U_vitrata = parseFloat(document.getElementById("fereastra").value);
+      let dT = parseFloat(document.getElementById("deltaT").value);
+      let sursa = document.getElementById("sursa").value;
+
+      if (isNaN(s) || isNaN(h) || isNaN(g) || isNaN(pard) || isNaN(dT)) {
+        document.getElementById("rezultat").innerHTML = "Completează toate câmpurile.";
+        return;
+      }
+
+      let V = s * h * etaje;
+      let corectie = etaje === 2 ? 0.90 : etaje === 3 ? 0.80 : etaje >= 4 ? 0.75 : 1.00;
+      let G_total = g + pard;
+      let q_vitrata = (S_vitrata && U_vitrata) ? S_vitrata * U_vitrata * dT : 0;
+      let Q = V * G_total * dT * corectie + q_vitrata;
+      let kW = Q / 1000;
+      let debit = (kW / (1.16 * 20)).toFixed(2) + " m³/h apă";
+
+      let consum = '', cost = '';
+      if (sursa === 'gaz') {
+        consum = (kW / (0.90 * 9.5)).toFixed(2) + " m³/h";
+        cost = "~" + (kW / (0.90 * 9.5) * 8 * 30 * 0.35).toFixed(0) + " lei/lună";
+      } else if (sursa === 'electric') {
+        consum = kW.toFixed(2) + " kWh";
+        cost = "~" + (kW * 8 * 30 * 0.8).toFixed(0) + " lei/lună";
+      } else if (sursa === 'lemn') {
+        consum = (kW / (0.75 * 4)).toFixed(2) + " kg/h";
+        cost = "~" + (kW / (0.75 * 4) * 8 * 30 * 0.75).toFixed(0) + " lei/lună";
+      } else if (sursa === 'peleti') {
+        consum = (kW / (0.88 * 4.8)).toFixed(2) + " kg/h";
+        cost = "~" + (kW / (0.88 * 4.8) * 8 * 30 * 1.5).toFixed(0) + " lei/lună";
+      } else if (sursa === 'pompa') {
+        consum = (kW / 3.5).toFixed(2) + " kWh";
+        cost = "~" + (kW / 3.5 * 8 * 30 * 0.8).toFixed(0) + " lei/lună";
+      }
+
+      document.getElementById("rezultat").innerHTML = `
+        <strong>Putere estimată:</strong> ${kW.toFixed(2)} kW<br>
+        <strong>Pierderi ferestre:</strong> ${(q_vitrata / 1000).toFixed(2)} kW<br>
+        <strong>Consum:</strong> ${consum}<br>
+        <strong>Cost estimat:</strong> ${cost}<br>
+        <strong>Debit apă necesar:</strong> ${debit}<br><br>
+        <em>Estimare orientativă. Pentru precizie, recomandăm verificare în teren.</em>
+      `;
+    }
+  </script>
+
+</body>
+</html>

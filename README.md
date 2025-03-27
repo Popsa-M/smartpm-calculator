@@ -1,2 +1,2 @@
-# smartpm-calculator
-calculator HVAC - estimare-putere, consum, debit apa, cost
+# Smartpm-calculator
+calculator HVAC:estimare-putere, consum, debit apa, cost
